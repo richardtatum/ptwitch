@@ -31,6 +31,10 @@ class Credentials:
             'grant_type': self.grant_type
         }
 
+    @property
+    def valid(self):
+        return datetime.now() < self.expires
+
     def __get_config(self):
         with open(CONFIG_PATH, "r") as config_file:
             file = json.load(config_file, object_hook=lambda d: SimpleNamespace(**d))
@@ -68,6 +72,9 @@ class Credentials:
             # Default function just outputs the date as a string
             json.dump(auth, auth_file, default=lambda d: d.__str__())
 
+    def __get_expiry_date(self, expires_in):
+        return datetime.now() + timedelta(seconds=expires_in)
+
     def authorize(self):
         loaded_from_file = self.__get_auth()
 
@@ -84,11 +91,3 @@ class Credentials:
         expires_in = response["expires_in"]
         
         self.__set_auth(access_token, expires_in)
-
-    @property
-    def valid(self):
-        return datetime.now() < self.expires
-
-    def __get_expiry_date(self, expires_in):
-        return datetime.now() + timedelta(seconds=expires_in)
-
