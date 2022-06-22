@@ -1,23 +1,40 @@
+import json
+from types import SimpleNamespace
 import requests
 import mpv
+import typer
 
 from credentials import Credentials
 
 player = mpv.MPV(ytdl=True, hwdec="auto")
+app = typer.Typer()
 credentials = Credentials()
 
-request = requests.get("https://api.twitch.tv/helix/streams?first=20", headers=credentials.headers)
-top_streams = request.json()["data"]
+@app.command()
+def test():
+    typer.echo("Test complete!")
 
-streams = dict([(index, stream["user_login"]) for index, stream in enumerate(top_streams)])
+@app.command()
+def top(number_of_streams: int, language: str = "en"):
+    request = requests.get(f"https://api.twitch.tv/helix/streams?first={number_of_streams}&language={language}", headers=credentials.headers)
 
-print("Top 20 Twitch Streams")
-for index in streams:
-    print(f"{index+1}: {streams[index]}")
+    data = request.json()["data"]
+    top_streams = json.loads(json.dumps(data), object_hook=lambda d: SimpleNamespace(**d))
 
-selected = int(input("Select stream to play: "))
+    streams = dict([(index, stream) for index, stream in enumerate(top_streams)])
 
-streamer = streams[selected-1]
+    print("Top 20 Twitch Streams")
+    for index in streams:
+        stream = streams[index]
+        streamer = stream.user_name
+        game = stream.game_name
+        print(f"{index+1}: {streamer} - {game}")
 
-player.play(f"https://twitch.tv/{streamer}")
-player.wait_for_playback()
+    selected = int(input("Select stream to play: "))
+    streamer = streams[selected-1].user_name
+
+    player.play(f"https://twitch.tv/{streamer}")
+    player.wait_for_playback()
+
+if __name__ == "__main__":
+    app()
