@@ -36,5 +36,10 @@ def top(number_of_streams: int, language: str = "en"):
     player.play(f"https://twitch.tv/{streamer}")
     player.wait_for_playback()
 
+@app.command()
+def stream(user):
+    player.play(f"https://twitch.tv/{user}")
+    player.wait_for_playback()
+
 if __name__ == "__main__":
     app()
