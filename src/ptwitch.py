@@ -1,13 +1,12 @@
 import json
 from types import SimpleNamespace
-from unicodedata import name
 import requests
 import mpv
 import typer
 
 from credentials import Credentials
 
-player = mpv.MPV(ytdl=True, hwdec="auto")
+player = mpv.MPV(ytdl=True, hwdec="auto", input_default_bindings=True, input_vo_keyboard=True, osc=True)
 app = typer.Typer()
 credentials = Credentials()
 
@@ -22,9 +21,9 @@ def top(stream_count: int, game_id: str = "", language: str = "en"):
     data = request.json()["data"]
     top_streams = json.loads(json.dumps(data), object_hook=lambda d: SimpleNamespace(**d))
     streams = dict([(index, stream) for index, stream in enumerate(top_streams)])
-    
+
     if len(streams) == 0:
-        print("No streams found!")
+        print("No streams found.")
         return
 
     print(f"Top {stream_count} Twitch Streams")
@@ -41,7 +40,7 @@ def top(stream_count: int, game_id: str = "", language: str = "en"):
     player.wait_for_playback()
 
 @app.command()
-def stream(user):
+def stream(user: str) -> None:
     player.play(f"https://twitch.tv/{user}")
     player.wait_for_playback()
 
@@ -60,6 +59,7 @@ def game(game_name: str, stream_count: int = 10,  language: str = "en"):
     # Assign the id from the first game
     game_id = games[0].id
 
+    # If there is more than one matching game, prompt selection
     if len(games) > 1:
         print(f"Matching games:")
         for index in games:
